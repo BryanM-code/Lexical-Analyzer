@@ -1,7 +1,93 @@
+#include "token.h"
 #include "numbers.h"
+#include <iostream>
+#include <cctype>
 
-Token numberFSM(std::istream& /* input */)
-{
-    // TODO: Person 2 - FSM for integers and reals (123.00 and .001, but not 123.).
-    return {"unimplemented", ""};
+namespace{
+    // int: d+
+    // real: d*.d*
+
+    enum State {
+        start,
+        initial_dig,
+        initial_dot,
+        after_dot,
+        dap, // digit after period/dot
+        done
+    };
+
+    bool isDigit(int c) {
+        // if not end of file and c is a digit that isn't 0
+        return c != EOF && std::isdigit(static_cast<unsigned char>(c)) != 0;
+    }
+} // namespace
+
+// FSM for integers and reals
+Token numberFSM(std::istream& input) {
+    State state = start;
+    std::string lex;
+
+    while (state != done) {
+        int c = input.peek();
+        switch(state) {
+        case start: // if digit go to int accepting state, if dot go to after_dpt state, else invalid
+            if (isDigit(c)) {
+                lex += static_cast<char>(input.get());
+                state = initial_dig;
+            } else if(c == '.') {
+                lex += static_cast<char>(input.get());
+                state = after_dot;
+            } else {
+                return {"invalid", ""}; // shouldn't be able to get to this point
+            }
+            break;
+        
+        case initial_dig: // if digit comes after digit add to token, else (white space or comment) accept state
+            if (isDigit(c)) {
+                lex += static_cast<char>(input.get());
+            } else if (c == '.') {
+                lex += static_cast<char>(input.get());
+                state = initial_dot;
+            } else {
+                state = done; // accepting int
+            }
+            break;
+
+        case initial_dot: // if digit after dot add to token, else (nothing after dot) erase dot from token and number is completed token
+            if (isDigit(c)) {
+                lex += static_cast<char>(input.get());
+                state = dap;
+            } else {
+                input.unget();
+                lex.pop_back();
+                return {"integer", lex};
+            }
+            break;
+
+        case after_dot: // if digit go to dap state, else invalid (dot after dot)
+            if (isDigit(c)) {
+                lex += static_cast<char>(input.get());
+                state = dap;
+            } else {
+                return {"invalid", ""};
+            }
+            break;
+
+        case dap: // if digit comes after dot add to token, else (white space or comment) accept the real num
+            if(isDigit(c)) {
+                lex += static_cast<char>(input.get());
+            } else {
+                state = done; // accepting real
+            }
+        case done:
+            break;
+        }
+    }
+
+    // if lexeme doesn't have a dot, return int, else return real
+    if (lex.find(".") == std::string::npos) {
+        return {"integer", lex};
+    } else {
+        return {"real", lex};
+    }
 }
