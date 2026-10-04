@@ -17,7 +17,7 @@ namespace{
     };
 
     bool isDigit(int c) {
-        // if not end of file and c is a digit that isn't 0
+        // if not end of file and c is a digit 
         return c != EOF && std::isdigit(static_cast<unsigned char>(c)) != 0;
     }
 } // namespace
