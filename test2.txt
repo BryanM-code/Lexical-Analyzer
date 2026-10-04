@@ -1,0 +1,16 @@
+! Test 2 !
+while (fahr <= upper) a = 23.1;
+integer low;
+count = 0.5
+get(count)
+! less than 21 lines !
+@
+real time;
+real value;
+time = 3.24;
+value = 6.33;
+if (count == 0.5)
+{
+    put(time);
+    get(value);
+}

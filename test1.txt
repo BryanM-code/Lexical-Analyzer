@@ -1,0 +1,5 @@
+! Test 1 !
+while (fahr <= upper) a = 23.1;
+integer low;
+count = 0.5
+get(count)
