@@ -14,3 +14,6 @@ if (count == 0.5)
     put(time);
     get(value);
 }
+function integer boolean real if else fi while return get put true false
+hello;
+hello

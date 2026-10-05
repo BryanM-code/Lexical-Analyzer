@@ -67,6 +67,22 @@ Token identifierFSM(std::istream& input)
         return {"eof", ""};
     }
 
+    int next = input.peek();
+    if (next == '.')
+    {
+        // A word and a decimal number must be separated by whitespace.
+        do
+        {
+            lexeme += static_cast<char>(input.get());
+            next = input.peek();
+        }
+        while (next != std::char_traits<char>::eof() &&
+               (std::isalnum(static_cast<unsigned char>(next)) ||
+                next == '_' || next == '.'));
+
+        return {"invalid", lexeme};
+    }
+
     // Normalize a copy for case insensitive keyword lookup.
     std::string normalized = lexeme;
 

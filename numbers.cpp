@@ -53,14 +53,12 @@ Token numberFSM(std::istream& input) {
             }
             break;
 
-        case initial_dot: // if digit after dot add to token, else (nothing after dot) erase dot from token and number is completed token
+        case initial_dot: // A decimal point must be followed by a digit.
             if (isDigit(c)) {
                 lex += static_cast<char>(input.get());
                 state = dap;
             } else {
-                input.unget();
-                lex.pop_back();
-                return {"integer", lex};
+                return {"invalid", lex};
             }
             break;
 
@@ -69,7 +67,7 @@ Token numberFSM(std::istream& input) {
                 lex += static_cast<char>(input.get());
                 state = dap;
             } else {
-                return {"invalid", ""};
+                return {"invalid", lex};
             }
             break;
 
@@ -82,6 +80,21 @@ Token numberFSM(std::istream& input) {
         case done:
             break;
         }
+    }
+
+    int next = input.peek();
+    if (next != EOF &&
+        (std::isalpha(static_cast<unsigned char>(next)) ||
+         next == '_' || next == '.')) {
+        // A number cannot be immediately followed by a word or another decimal.
+        do {
+            lex += static_cast<char>(input.get());
+            next = input.peek();
+        } while (next != EOF &&
+                 (std::isalnum(static_cast<unsigned char>(next)) ||
+                  next == '_' || next == '.'));
+
+        return {"invalid", lex};
     }
 
     // if lexeme doesn't have a dot, return int, else return real
