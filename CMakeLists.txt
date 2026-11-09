@@ -6,6 +6,9 @@ add_executable(rat26f_lexer
     identifier.cpp
     numbers.cpp
     lexer.cpp
+    parser_p1.cpp
+    parser_p2.cpp
+    parser_p3.cpp
 )
 
 target_compile_features(rat26f_lexer PRIVATE cxx_std_17)
