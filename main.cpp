@@ -41,16 +41,8 @@ int main(int argc, char* argv[])
     }
 
     // parse the whole program, starting from R1 <Rat26F>
+    // (on a syntax error the parser prints the message and stops the program, so it never returns here)
     rat26f();
-
-    // a correct program ends right after its last statement
-    if (token.type != "eof") {
-        outputFile << "\nSyntax error: expected end of file but found "
-                   << token.type << " '" << token.lexeme << "'\n";
-        std::cout << "Syntax error: expected end of file but found "
-                  << token.type << " '" << token.lexeme << "'\n";
-        return 1;
-    }
 
     outputFile << "\nParsing complete: no syntax errors found.\n";
     std::cout << "Parsing complete: no syntax errors found.\n";

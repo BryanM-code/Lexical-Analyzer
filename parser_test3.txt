@@ -1,0 +1,42 @@
+! Test 3 (over 21 lines): several functions, declarations,
+  if/else/fi, while, return, reals, booleans and function calls !
+function max (a, b integer)
+{
+    if (a > b) return a; else return b; fi
+}
+
+function average (total real, count integer)
+    real result;
+{
+    result = total / count;
+    return result;
+}
+
+function reset ()
+{
+    return;
+}
+
+@
+integer i, n, biggest;
+real sum, avg;
+boolean done;
+@
+get (n);
+i = 0;
+sum = 0.0;
+done = false;
+WHILE (i < n)
+{
+    sum = sum + i * 2.5;
+    i = i + 1;
+}
+biggest = max (i, n);
+avg = average (sum, n);
+if (avg >= 10.0)
+{
+    put (avg);
+    done = true;
+}
+fi
+if (biggest != -1) put (-biggest + (n - 1) / 2); else put (0); fi

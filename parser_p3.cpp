@@ -45,6 +45,18 @@ static std::string lowercaseLexeme()
 // Print a syntax error to the output file and the screen, then stop the program.
 static void syntaxError(const std::string& expected)
 {
+    // line number: count the newlines from the start of the file up to the current position
+    inputFile.clear();
+    std::streampos position = inputFile.tellg();
+    inputFile.seekg(0);
+    int line = 1;
+    char ch;
+    while (inputFile.tellg() < position && inputFile.get(ch)) {
+        if (ch == '\n') {
+            line++;
+        }
+    }
+
     std::string found;
     if (token.type == "eof") {
         found = "end of file";
@@ -52,9 +64,10 @@ static void syntaxError(const std::string& expected)
         found = token.type + " '" + token.lexeme + "'";
     }
 
-    std::string message = "Syntax error: expected " + expected + " but found " + found;
+    std::string message = "Syntax error at line " + std::to_string(line) +
+                          ": expected " + expected + " but found " + found;
     outputFile << "\n" << message << "\n";
-    std::cout << message << "\n";
+    std::cerr << message << "\n";
     std::exit(1);
 }
 

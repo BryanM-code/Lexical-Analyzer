@@ -1,0 +1,7 @@
+! Test 1 (under 10 lines): a short program with no functions !
+@
+integer x, y;
+@
+get (x);
+y = x * 2 + 1;
+put (y);

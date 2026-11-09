@@ -5,6 +5,7 @@
 #include <algorithm>
 #include <cctype>
 #include <cstdlib>
+#include <iomanip>
 #include <iostream>
 #include <string>
 
@@ -51,15 +52,21 @@ static void printRule(const std::string &rule) {
 static void advance() {
     token = lexer(inputFile);
     if (printRules && !isEOF(token)) {
-        outputFile << "Token: " << token.type << "\tLexeme: " << token.lexeme << "\n";
+        outputFile << "Token: " << std::left << std::setw(14) << token.type << "Lexeme: " << token.lexeme << "\n";
     }
 }
 
 // syntax error handling
 static void syntaxError(const std::string &expected, const std::string &rule) {
-    std::string msg = "Syntax Error at line " + std::to_string(currentLine()) +
-                      ": found Token: " + token.type + ", Lexeme: '" + token.lexeme +
-                      "' but expected " + expected + " while parsing " + rule + ".";
+    std::string found;
+    if (isEOF(token)) {
+        found = "end of file";
+    } else {
+        found = token.type + " '" + token.lexeme + "'";
+    }
+    std::string msg = "Syntax error at line " + std::to_string(currentLine()) +
+                      ": expected " + expected + " but found " + found +
+                      " while parsing " + rule;
     std::cerr << msg << "\n";
     if (outputFile.is_open()) {
         outputFile << "\n" << msg << "\n";  
@@ -86,7 +93,6 @@ static void expectIdentifier(const std::string &rule) {
 // R1. <Rat26F> ::= <Opt Function Definitions> @ <Opt Declaration List> @ <Statement List>
 void rat26f()
 {
-    advance();
     printRule("<Rat26F> -> <Opt Function Definitions> @ <Opt Declaration List> @ <Statement List>");
     
     optFunctionDefinitions();
@@ -108,7 +114,7 @@ void optFunctionDefinitions()
         printRule("<Opt Function Definitions> -> <Function Definitions>");
         functionDefinitions();
     } else {
-        printRule("<Opt Function Definitions> -> <Empty>");
+        printRule("<Opt Function Definitions> -> ε");
     }
 }
 
@@ -127,7 +133,7 @@ void functionDefinitionsPrime()
         printRule("<Function Definitions Prime> -> <Function Definitions>");
         functionDefinitions();
     } else {
-        printRule("<Function Definitions Prime> -> <Empty>");
+        printRule("<Function Definitions Prime> -> ε");
     }
 }
 
@@ -151,7 +157,7 @@ void optParameterList()
         printRule("<Opt Parameter List> -> <Parameter List>");
         parameterList();
     } else {
-        printRule("<Opt Parameter List> -> <Empty>");
+        printRule("<Opt Parameter List> -> ε");
     }
 }
 
@@ -171,7 +177,7 @@ void parameterListPrime()
         advance();
         parameterList();
     } else {
-        printRule("<Parameter List Prime> -> <Empty>");
+        printRule("<Parameter List Prime> -> ε");
     }
 }
 
@@ -214,6 +220,6 @@ void optDeclarationList()
         printRule("<Opt Declaration List> -> <Declaration List>");
         declarationList();
     } else {
-        printRule("<Opt Declaration List> -> <Empty>");
+        printRule("<Opt Declaration List> -> ε");
     }
 }

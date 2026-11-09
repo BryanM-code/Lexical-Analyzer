@@ -18,37 +18,38 @@ namespace {
         return s;
     }
     
-    std::string capitalize(std::string s) {
-        if (!s.empty()) {
-            s[0] = static_cast<char>(std::toupper(static_cast<unsigned char> (s[0])));
-        }
-        return s;
-    }
+    // read the next token from the lexer and print it (if the switch is on)
     void advance() {
         token = lexer(inputFile);
-        if (printRules) {
-            outputFile << "Token: " << std::left << std::setw(12) << capitalize(token.type) << " Lexeme: " << token.lexeme << "\n";
+        if (printRules && token.type != "eof") {
+            outputFile << "Token: " << std::left << std::setw(14) << token.type << "Lexeme: " << token.lexeme << "\n";
         }
     }
+    // print a production rule (if the switch is on)
     void rule(const std::string &text) {
         if (printRules) {
-            outputFile <<  "   " << text << "\n";
+            outputFile << "     " << text << "\n";
         }
     }
+    // is the current token of this type? (e.g. "identifier")
     bool isType(const char * t) {
         return token.type == t;
     }
+    // is the current token this operator or separator? (e.g. ";")
     bool isSym(const char * s) {
         return (token.type == "operator" || token.type == "separator") && token.lexeme == s;
     }
+    // is the current token this keyword? (not case sensitive)
     bool isKw(const char * s) {
         return token.type == "keyword" && lower(token.lexeme) == s;
     }
+    // can the current token start a declaration? (integer, boolean or real)
     bool isQualifier() {
         return isKw("integer") || isKw("boolean") || isKw("real");
     }
+    // can the current token start a statement?
     bool isStatementStart() {
-        return isSym("{") || isSym("identifier") || isKw("if") || isKw("return") || isKw("put") || isKw("get") || isKw("while");
+        return isSym("{") || isType("identifier") || isKw("if") || isKw("return") || isKw("put") || isKw("get") || isKw("while");
     }
     // line # of token
     int currentLine() {
@@ -70,37 +71,37 @@ namespace {
         return line;
     }
     // error message
-    void fail(const std::string &errorType) {
+    void fail(const std::string &expected) {
         std::ostringstream msg;
-        msg << "Syntax error at line " << currentLine() << ": token = " << capitalize(token.type) << ", lexeme = " << token.lexeme << "'";
+        msg << "Syntax error at line " << currentLine() << ": expected " << expected << " but found ";
         if (isType("eof")) {
-            msg << " (end of file)";
+            msg << "end of file";
+        } else {
+            msg << token.type << " '" << token.lexeme << "'";
         }
-        msg << ", error type = ";
-        if(isType("invalid")) {
-            msg << "invalid token; ";
-        }
-        msg << errorType;
         outputFile << "\n" << msg.str() << "\n";
         outputFile.flush();
         std::cerr << msg.str() << "\n";
-        std::exit(2);
+        std::exit(1);
     }
+    // the current token must be this symbol: move past it, or report a syntax error
     void expectSym(const char * s, const std::string & context) {
         if (!isSym(s)) {
-            fail("'" + std::string(s) + "' expected" + (context.empty() ? "" : " " + context));
+            fail("'" + std::string(s) + "'" + (context.empty() ? "" : " " + context));
         }
         advance();
     }
+    // the current token must be this keyword: move past it, or report a syntax error
     void expectKw(const char * s) {
         if (!isKw(s)) {
-            fail("keyword '" + std::string(s) + "' expected");
+            fail("keyword '" + std::string(s) + "'");
         }
         advance();
     }
+    // the current token must be an identifier: move past it, or report a syntax error
     void expectIdentifier() {
         if (!isType("identifier")) {
-            fail("identifier expected");
+            fail("an identifier");
         }
         advance();
     }
@@ -109,7 +110,7 @@ namespace {
 
 // R11. <Declaration List> ::= <Declaration> ; <Declaration List Prime>
 void declarationList() {
-    rule("<Declaration List> ::= <Declaration> ; <Declaration List Prime>");
+    rule("<Declaration List> -> <Declaration> ; <Declaration List Prime>");
     declaration();
     expectSym(";", "after the declaration");
     declarationListPrime();
@@ -118,7 +119,7 @@ void declarationList() {
 // R11. <Declaration List Prime> ::= <Declaration List> | <Empty>
 void declarationListPrime() {
     if (isQualifier()) {
-        rule("<Declaration List Prime> ::= <Declaration List>");
+        rule("<Declaration List Prime> -> <Declaration List>");
         declarationList();
     } else {
         rule("<Declaration List Prime> -> \xCE\xB5"); // displays epsilon symbol
@@ -127,14 +128,14 @@ void declarationListPrime() {
 
 // R12. <Declaration> ::= <Qualifier> <IDs>
 void declaration() {
-    rule("<Declaration -> <Qualifier> <IDs>");
+    rule("<Declaration> -> <Qualifier> <IDs>");
     qualifier();
     ids();
 }
 
 // R13. <IDs> ::= <Identifier> <IDs Prime>
 void ids() {
-    rule("<IDs -> <Identifier> <IDs Prime>");
+    rule("<IDs> -> <Identifier> <IDs Prime>");
     expectIdentifier();
     idsPrime();
 }
@@ -191,13 +192,13 @@ void statement() {
         rule("<Statement> -> <While>");
         whileStatement();
     } else {
-        fail("statement expected");
+        fail("a statement");
     }
 }
 
 // R16. <Compound> ::= { <Statement List> }
 void compound() {
-    rule("<Compound> -> { Statement List > }");
+    rule("<Compound> -> { <Statement List> }");
     expectSym("{", "");
     statementList();
     expectSym("}", "to close the compound statement");
@@ -207,7 +208,7 @@ void compound() {
 void assign() {
     rule("<Assign> -> <Identifier> = <Expression> ;");
     expectIdentifier();
-    expectSym("=", "after the identifier in an asignment");
+    expectSym("=", "after the identifier in an assignment");
     expression();
     expectSym(";", "at the end of assignment");
 }
@@ -234,7 +235,7 @@ void ifPrime() {
         statement();
         expectKw("fi");
     } else {
-        fail("'fi' or 'else' expected");
+        fail("'fi' or 'else'");
     }
 }
 
@@ -248,7 +249,7 @@ void returnStatement() {
 // R19. <Return Prime> ::= ; | <Expression> ;
 void returnPrime() {
     if(isSym(";")) {
-        rule("<Return Prime -> ;");
+        rule("<Return Prime> -> ;");
         advance();
     } else{
         rule("<Return Prime> -> <Expression> ;");
