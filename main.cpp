@@ -1,8 +1,8 @@
 #include "lexer.h"
+#include "parser.h"
 
 #include <iostream>
 #include <iomanip>
-#include <fstream>
 #include <string>
 
 // command line arguments
@@ -20,35 +20,39 @@ int main(int argc, char* argv[])
     const std::string sourceName = argv[1];
     const std::string outputName = (argc > 2) ? argv[2] : "output.txt";
 
-    // open source file to read
-    std::ifstream source(sourceName);
-    if (!source) {
+    // open source file to read (inputFile is shared with the parser, see parser.h)
+    inputFile.open(sourceName);
+    if (!inputFile) {
         std::cerr << "error: cannot open source file '" << sourceName << "'\n";
         return 1;
     }
-    // open output file to write
-    std::ofstream output(outputName);
-    if (!output) {
+    // open output file to write (outputFile is shared with the parser, see parser.h)
+    outputFile.open(outputName);
+    if (!outputFile) {
         std::cerr << "error: cannot open output file '" << outputName << "'\n";
         return 1;
     }
 
-    // header for output file
-    output << std::left << std::setw(12) << "token" << "lexeme\n\n";
-    //std::cout << std::left << std::setw(12) << "token" << "lexeme\n\n";
-
-    // loop through the input file
-    while (true) {
-        Token tok = lexer(source);
-
-        if (tok.type == "eof") {
-            break;
-        }
-
-        output << std::left << std::setw(12) << tok.type << tok.lexeme << "\n";
-        //std::cout << std::left << std::setw(12) << tok.type << tok.lexeme << "\n";
-
+    // read the first token: every rule function expects 'token' to already hold the current token
+    token = lexer(inputFile);
+    if (printRules && token.type != "eof") {
+        outputFile << "Token: " << std::left << std::setw(14) << token.type
+                   << "Lexeme: " << token.lexeme << "\n";
     }
 
+    // parse the whole program, starting from R1 <Rat26F>
+    rat26f();
+
+    // a correct program ends right after its last statement
+    if (token.type != "eof") {
+        outputFile << "\nSyntax error: expected end of file but found "
+                   << token.type << " '" << token.lexeme << "'\n";
+        std::cout << "Syntax error: expected end of file but found "
+                  << token.type << " '" << token.lexeme << "'\n";
+        return 1;
+    }
+
+    outputFile << "\nParsing complete: no syntax errors found.\n";
+    std::cout << "Parsing complete: no syntax errors found.\n";
     return 0;
 }
