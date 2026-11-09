@@ -12,7 +12,7 @@
 namespace {
     // private helper
     std::string lower(std::string s) {
-        for (char &c : s) {
+        for(char &c : s) {
             c = static_cast<char>(std::tolower(static_cast<unsigned char> (c)));
         }
         return s;
@@ -60,7 +60,7 @@ namespace {
         int line = 1;
         char c;
         inputFile.seekg(0);
-        while (inputFile.tellg() < pos && inputFile.get(c)) {
+        while(inputFile.tellg() < pos && inputFile.get(c)) {
             if (c == '\n') {
                 line++;
             }
